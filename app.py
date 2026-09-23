@@ -1,7 +1,7 @@
 """
-Nexus Vision — YOLOv8 Object Detection Web App
+Nexus Vision — YOLO11 Object Detection Web App
 ----------------------------------------------
-Real-time object detection with YOLOv8 (pretrained on COCO, 80 classes).
+Real-time object detection with YOLO11 (pretrained on COCO, 80 classes).
 """
 
 import time
@@ -26,7 +26,7 @@ st.set_page_config(
     menu_items={
         "Get Help": "https://github.com/ultralytics/ultralytics",
         "Report a bug": "https://github.com/ultralytics/ultralytics/issues",
-        "About": "Nexus Vision — YOLOv8 object detection built with Streamlit.",
+        "About": "Nexus Vision — YOLO11 object detection built with Streamlit.",
     },
 )
 
@@ -285,7 +285,8 @@ def summarize(detections):
 MODEL_OPTIONS = {
     "Nano — fastest, least accurate (yolov8n.pt)": "yolov8n.pt",
     "Small — balanced (yolov8s.pt)": "yolov8s.pt",
-    "Medium — most accurate, slower (yolov8m.pt)": "yolov8m.pt",
+    "Medium — recommended, best balance (yolo11m.pt)": "yolo11m.pt",
+    "Large — high accuracy, slower (yolo11l.pt)": "yolo11l.pt",
 }
 
 with st.sidebar:
@@ -297,8 +298,8 @@ with st.sidebar:
     model_label = st.selectbox(
         "Model size",
         list(MODEL_OPTIONS.keys()),
-        index=0,
-        help="Larger models are more accurate but slower to run, especially on CPU.",
+        index=2,  # Default to Medium (yolo11m.pt)
+        help="YOLO11m is the recommended default: best accuracy/speed balance.",
     )
     weights_file = MODEL_OPTIONS[model_label]
 
@@ -306,7 +307,7 @@ with st.sidebar:
         "Confidence threshold",
         min_value=0.10,
         max_value=0.90,
-        value=0.60,
+        value=0.40,
         step=0.05,
         help="Only detections above this score are shown.",
     )
@@ -360,7 +361,7 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.caption("YOLOv8 · Streamlit · COCO (80 classes)")
+    st.caption("YOLO11 · Streamlit · COCO (80 classes)")
 
 if not model_loaded:
     st.stop()
@@ -374,7 +375,7 @@ st.markdown(
         <div class="hero-icon">{icon("visibility", "2rem")}</div>
         <div>
             <div class="hero-title">Nexus Vision</div>
-            <div class="hero-sub">AI-powered object detection · YOLOv8 · 80 COCO classes</div>
+            <div class="hero-sub">AI-powered object detection · YOLO11 · 80 COCO classes</div>
         </div>
     </div>
     """,
@@ -436,7 +437,7 @@ if image is not None:
         )
         st.image(image, use_container_width=True)
 
-    with st.spinner("Running YOLOv8 inference..."):
+    with st.spinner("Running YOLO11 inference..."):
         try:
             annotated_rgb, detections, inference_time = run_detection(
                 model, image, conf_threshold, iou_threshold, max_det
@@ -539,7 +540,7 @@ if image is not None:
             "No objects detected. Try lowering the confidence threshold in the sidebar."
         )
         st.caption(
-            "Tip: YOLOv8 tends to struggle with drawings, cartoons, heavy motion blur, "
+            "Tip: YOLO11 tends to struggle with drawings, cartoons, heavy motion blur, "
             "and very low-light images."
         )
 else:
