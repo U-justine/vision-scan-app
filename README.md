@@ -86,4 +86,4 @@ Apache 2.0 — free to use for learning and portfolio projects.
 - Framework: [Streamlit](https://streamlit.io)
 - Icons: [Material Symbols](https://fonts.google.com/icons)
 
-© 2026 Justine Umutoni
+© 2026 Justine Umutoni 
