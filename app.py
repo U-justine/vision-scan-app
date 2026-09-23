@@ -30,11 +30,10 @@ st.set_page_config(
     },
 )
 
-# A sane ceiling so a huge phone photo doesn't crawl through the pipeline.
 MAX_IMAGE_SIDE = 1920
 
 # =============================================================================
-# Custom CSS — modern dark theme, icons, hover effects
+# Modern design system (deep slate + electric teal)
 # =============================================================================
 st.markdown(
     """
@@ -44,166 +43,183 @@ st.markdown(
     <style>
         html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
         .stApp {
-            background: radial-gradient(circle at 20% 0%, #1a1f3a 0%, #0d1020 45%, #05060d 100%);
-            color: #e6e8f0;
+            background: linear-gradient(160deg, #0b1220 0%, #0f172a 40%, #0a0f1c 100%);
+            color: #e2e8f0;
         }
 
         .material-symbols-rounded {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
             font-size: 1.15rem;
-            color: #7c8cff;
+            color: #2dd4bf;
         }
 
+        /* Hero */
         .hero {
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 28px 32px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, rgba(124,140,255,0.15), rgba(160,90,255,0.08));
-            border: 1px solid rgba(124,140,255,0.25);
-            backdrop-filter: blur(12px);
-            margin-bottom: 24px;
+            gap: 20px;
+            padding: 32px 36px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, rgba(45,212,191,0.12), rgba(14,165,233,0.08));
+            border: 1px solid rgba(45,212,191,0.25);
+            backdrop-filter: blur(16px);
+            margin-bottom: 28px;
             transition: all 0.3s ease;
         }
         .hero:hover {
-            border-color: rgba(124,140,255,0.55);
-            box-shadow: 0 0 30px rgba(124,140,255,0.18);
+            border-color: rgba(45,212,191,0.55);
+            box-shadow: 0 0 40px rgba(45,212,191,0.15);
         }
         .hero-icon {
-            width: 56px;
-            height: 56px;
+            width: 60px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #7c8cff, #a05aff);
-            box-shadow: 0 0 20px rgba(124,140,255,0.4);
+            border-radius: 18px;
+            background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+            box-shadow: 0 0 24px rgba(45,212,191,0.45);
         }
-        .hero-icon .material-symbols-rounded { font-size: 2rem; color: #ffffff; }
+        .hero-icon .material-symbols-rounded { font-size: 2.1rem; color: #0f172a; }
         .hero-title {
-            font-size: 2rem;
+            font-size: 2.15rem;
             font-weight: 800;
             margin: 0;
-            background: linear-gradient(90deg, #ffffff, #b8c0ff);
+            background: linear-gradient(90deg, #f8fafc, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .hero-sub { font-size: 0.95rem; color: #9aa4c8; margin-top: 4px; }
+        .hero-sub { font-size: 1rem; color: #94a3b8; margin-top: 6px; letter-spacing: 0.02em; }
 
+        /* Cards & stats */
         .card {
             background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(124,140,255,0.18);
-            border-radius: 16px;
-            padding: 20px;
+            border: 1px solid rgba(45,212,191,0.15);
+            border-radius: 18px;
+            padding: 22px;
             transition: all 0.25s ease;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
         .card:hover {
-            border-color: rgba(124,140,255,0.55);
-            background: rgba(124,140,255,0.06);
+            border-color: rgba(45,212,191,0.4);
+            background: rgba(45,212,191,0.05);
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
         }
 
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 14px;
-            margin: 18px 0;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
         }
         .stat {
-            background: linear-gradient(135deg, rgba(124,140,255,0.10), rgba(160,90,255,0.05));
-            border: 1px solid rgba(124,140,255,0.22);
-            border-radius: 14px;
-            padding: 18px 20px;
+            background: linear-gradient(145deg, rgba(45,212,191,0.08), rgba(14,165,233,0.04));
+            border: 1px solid rgba(45,212,191,0.2);
+            border-radius: 16px;
+            padding: 20px;
             display: flex;
             align-items: center;
             gap: 14px;
             transition: all 0.25s ease;
         }
         .stat:hover {
-            border-color: rgba(124,140,255,0.6);
-            box-shadow: 0 0 22px rgba(124,140,255,0.18);
+            border-color: rgba(45,212,191,0.5);
+            box-shadow: 0 0 28px rgba(45,212,191,0.12);
             transform: translateY(-3px);
         }
         .stat-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: rgba(124,140,255,0.18);
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: rgba(45,212,191,0.15);
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .stat-icon .material-symbols-rounded { font-size: 1.5rem; color: #b8c0ff; }
-        .stat-value { font-size: 1.6rem; font-weight: 700; color: #ffffff; line-height: 1; }
+        .stat-icon .material-symbols-rounded { font-size: 1.5rem; color: #5eead4; }
+        .stat-value { font-size: 1.65rem; font-weight: 700; color: #f1f5f9; line-height: 1; }
         .stat-label {
-            font-size: 0.8rem;
-            color: #9aa4c8;
+            font-size: 0.78rem;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.07em;
             margin-top: 4px;
         }
 
+        /* Detection items */
         .det-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.03);
-            border-left: 3px solid #7c8cff;
-            margin-bottom: 8px;
+            padding: 13px 18px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.025);
+            border-left: 3px solid #2dd4bf;
+            margin-bottom: 9px;
             transition: all 0.2s ease;
         }
         .det-item:hover {
-            background: rgba(124,140,255,0.08);
-            border-left-color: #a05aff;
-            transform: translateX(4px);
+            background: rgba(45,212,191,0.07);
+            border-left-color: #0ea5e9;
+            transform: translateX(5px);
         }
-        .det-name { font-weight: 600; color: #e6e8f0; flex: 1; text-transform: capitalize; }
+        .det-name { font-weight: 600; color: #e2e8f0; flex: 1; text-transform: capitalize; }
         .det-count {
-            font-size: 0.85rem;
-            color: #9aa4c8;
-            padding: 3px 10px;
-            border-radius: 8px;
-            background: rgba(124,140,255,0.12);
+            font-size: 0.84rem;
+            color: #94a3b8;
+            padding: 3px 11px;
+            border-radius: 9px;
+            background: rgba(45,212,191,0.12);
         }
-        .det-conf { font-weight: 700; color: #7cffb2; font-variant-numeric: tabular-nums; }
-        .det-range { font-size: 0.78rem; color: #9aa4c8; margin-left: 6px; }
+        .det-conf { font-weight: 700; color: #5eead4; font-variant-numeric: tabular-nums; }
+        .det-range { font-size: 0.76rem; color: #64748b; margin-left: 6px; }
 
         .section-title {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1.15rem;
+            font-size: 1.18rem;
             font-weight: 700;
-            color: #e6e8f0;
-            margin: 24px 0 12px;
+            color: #f1f5f9;
+            margin: 26px 0 14px;
         }
 
+        /* Buttons */
         .stButton > button {
-            background: linear-gradient(135deg, #7c8cff, #a05aff);
-            color: white;
+            background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
+            color: #0f172a;
             border: none;
-            border-radius: 12px;
-            padding: 10px 22px;
+            border-radius: 14px;
+            padding: 11px 24px;
             font-weight: 600;
             transition: all 0.25s ease;
         }
-        .stButton > button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124,140,255,0.4); }
+        .stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(45,212,191,0.35);
+        }
 
+        /* Sidebar */
         section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #0d1020 0%, #141834 100%);
-            border-right: 1px solid rgba(124,140,255,0.15);
+            background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+            border-right: 1px solid rgba(45,212,191,0.12);
         }
         .stRadio > div { gap: 12px; }
         .stRadio label { transition: all 0.2s ease; }
-        .stRadio label:hover { color: #b8c0ff; }
-        .stFileUploader, .stCameraInput { border-radius: 14px; transition: all 0.25s ease; }
-        .stFileUploader:hover, .stCameraInput:hover { box-shadow: 0 0 24px rgba(124,140,255,0.15); }
+        .stRadio label:hover { color: #5eead4; }
+        .stFileUploader, .stCameraInput { border-radius: 16px; transition: all 0.25s ease; }
+        .stFileUploader:hover, .stCameraInput:hover { box-shadow: 0 0 28px rgba(45,212,191,0.12); }
+
+        /* Copyright */
+        .copyright {
+            text-align: center;
+            color: #475569;
+            font-size: 0.85rem;
+            margin-top: 48px;
+            padding: 24px 0 12px;
+            border-top: 1px solid rgba(45,212,191,0.1);
+        }
 
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
@@ -214,10 +230,9 @@ st.markdown(
 
 
 # =============================================================================
-# Helper functions
+# Helpers
 # =============================================================================
 def icon(name: str, size: str = "1.15rem") -> str:
-    """Return an HTML span for a Material Symbols icon, styled consistently."""
     return (
         f'<span class="material-symbols-rounded" '
         f'style="font-size:{size}; font-variation-settings: '
@@ -231,7 +246,6 @@ def load_model(weights: str) -> YOLO:
 
 
 def resize_if_needed(image: Image.Image, max_side: int = MAX_IMAGE_SIDE) -> Image.Image:
-    """Downscale oversized uploads so inference stays fast and memory-safe."""
     w, h = image.size
     if max(w, h) <= max_side:
         return image
@@ -240,12 +254,32 @@ def resize_if_needed(image: Image.Image, max_side: int = MAX_IMAGE_SIDE) -> Imag
     return image
 
 
-def run_detection(model: YOLO, image: Image.Image, conf: float, iou: float, max_det: int):
+def run_detection(model: YOLO, image: Image.Image, conf: float, iou: float, max_det: int, device: str, exclude: list):
     start = time.time()
-    results = model(np.array(image), conf=conf, iou=iou, max_det=max_det)
+    results = model(
+        np.array(image),
+        conf=conf,
+        iou=iou,
+        max_det=max_det,
+        device=device,
+        verbose=False,
+    )
     elapsed = time.time() - start
-
     result = results[0]
+
+    # Filter excluded classes BEFORE plotting so they never appear on the image
+    if exclude and result.boxes is not None:
+        keep = []
+        for i, box in enumerate(result.boxes):
+            cls_id = int(box.cls[0])
+            name = model.names.get(cls_id, f"class_{cls_id}")
+            if name not in exclude:
+                keep.append(i)
+        if keep:
+            result.boxes = result.boxes[keep]
+        else:
+            result.boxes = None
+
     annotated_bgr = result.plot()
     annotated_rgb = annotated_bgr[:, :, ::-1]
 
@@ -280,55 +314,39 @@ def summarize(detections):
 
 
 # =============================================================================
-# Sidebar
+# Sidebar — COCO class library focused + essential controls
 # =============================================================================
 MODEL_OPTIONS = {
-    "Nano — fastest, least accurate (yolov8n.pt)": "yolov8n.pt",
-    "Small — balanced (yolov8s.pt)": "yolov8s.pt",
-    "Medium — recommended, best balance (yolo11m.pt)": "yolo11m.pt",
-    "Large — high accuracy, slower (yolo11l.pt)": "yolo11l.pt",
+    "Nano — fastest (yolo11n.pt)": "yolo11n.pt",
+    "Small — balanced (yolo11s.pt)": "yolo11s.pt",
+    "Medium — recommended (yolo11m.pt)": "yolo11m.pt",
+    "Large — highest accuracy (yolo11l.pt)": "yolo11l.pt",
 }
 
 with st.sidebar:
     st.markdown(
-        f'<div class="section-title">{icon("tune", "1.3rem")} Settings</div>',
+        f'<div class="section-title">{icon("tune", "1.3rem")} Controls</div>',
         unsafe_allow_html=True,
     )
 
     model_label = st.selectbox(
-        "Model size",
+        "Model",
         list(MODEL_OPTIONS.keys()),
-        index=2,  # Default to Medium (yolo11m.pt)
-        help="YOLO11m is the recommended default: best accuracy/speed balance.",
+        index=2,
+        help="YOLO11m offers the best accuracy / speed balance.",
     )
     weights_file = MODEL_OPTIONS[model_label]
 
-    conf_threshold = st.slider(
-        "Confidence threshold",
-        min_value=0.10,
-        max_value=0.90,
-        value=0.40,
-        step=0.05,
-        help="Only detections above this score are shown.",
+    device = st.selectbox(
+        "Device",
+        ["cpu", "cuda", "mps"],
+        index=0,
+        help="Use cuda or mps if you have a compatible GPU.",
     )
 
-    iou_threshold = st.slider(
-        "IoU threshold (NMS)",
-        min_value=0.10,
-        max_value=0.90,
-        value=0.45,
-        step=0.05,
-        help="Controls how aggressively overlapping boxes for the same object are merged.",
-    )
-
-    max_det = st.slider(
-        "Max detections",
-        min_value=10,
-        max_value=300,
-        value=100,
-        step=10,
-        help="Upper limit on how many objects can be reported for one image.",
-    )
+    conf_threshold = st.slider("Confidence", 0.10, 0.90, 0.40, 0.05)
+    iou_threshold = st.slider("IoU (NMS)", 0.10, 0.90, 0.45, 0.05)
+    max_det = st.slider("Max detections", 10, 300, 100, 10)
 
     with st.spinner("Loading model..."):
         try:
@@ -338,44 +356,40 @@ with st.sidebar:
             model_loaded = False
             st.error(f"Couldn't load `{weights_file}`: {e}")
 
-    COCO_CLASSES = list(model.names.values()) if model_loaded else []
+    if model_loaded:
+        COCO_CLASSES = list(model.names.values())
+    else:
+        COCO_CLASSES = []
 
     exclude_classes = st.multiselect(
         "Exclude classes",
         COCO_CLASSES,
-        help="Detections of these classes will be filtered out of the results.",
+        help="These classes will be removed from both the image and the results.",
     )
-
-    with st.expander("COCO class library"):
-        st.caption(", ".join(COCO_CLASSES) if COCO_CLASSES else "Model not loaded.")
 
     st.markdown("---")
     st.markdown(
-        f'<div class="section-title">{icon("info", "1.3rem")} About confidence</div>',
+        f'<div class="section-title">{icon("library_books", "1.3rem")} COCO class library</div>',
         unsafe_allow_html=True,
     )
-    st.caption(
-        "The percentage next to each detection is a **confidence score**, "
-        "not a calibrated probability. It reflects the model's certainty "
-        "about that detection (objectness × class probability)."
-    )
-
-    st.markdown("---")
-    st.caption("YOLO11 · Streamlit · COCO (80 classes)")
+    if COCO_CLASSES:
+        st.caption(", ".join(COCO_CLASSES))
+    else:
+        st.caption("Model not loaded.")
 
 if not model_loaded:
     st.stop()
 
 # =============================================================================
-# Hero header
+# Hero
 # =============================================================================
 st.markdown(
     f"""
     <div class="hero">
-        <div class="hero-icon">{icon("visibility", "2rem")}</div>
+        <div class="hero-icon">{icon("visibility", "2.1rem")}</div>
         <div>
             <div class="hero-title">Nexus Vision</div>
-            <div class="hero-sub">AI-powered object detection · YOLO11 · 80 COCO classes</div>
+            <div class="hero-sub">AI-powered object detection</div>
         </div>
     </div>
     """,
@@ -440,14 +454,11 @@ if image is not None:
     with st.spinner("Running YOLO11 inference..."):
         try:
             annotated_rgb, detections, inference_time = run_detection(
-                model, image, conf_threshold, iou_threshold, max_det
+                model, image, conf_threshold, iou_threshold, max_det, device, exclude_classes
             )
         except Exception as e:
             st.error(f"Detection failed: {e}")
             st.stop()
-
-    if exclude_classes:
-        detections = [d for d in detections if d[0] not in exclude_classes]
 
     with col_detected:
         st.markdown(
@@ -455,7 +466,7 @@ if image is not None:
             unsafe_allow_html=True,
         )
         st.image(annotated_rgb, use_container_width=True)
-        st.caption(f"⏱ Inference time: {inference_time:.2f}s")
+        st.caption(f"⏱ Inference time: {inference_time:.2f}s · Device: {device}")
 
     if detections:
         summary = summarize(detections)
@@ -536,22 +547,27 @@ if image is not None:
             mime="image/png",
         )
     else:
-        st.warning(
-            "No objects detected. Try lowering the confidence threshold in the sidebar."
-        )
+        st.warning("No objects detected. Try lowering the confidence threshold.")
         st.caption(
-            "Tip: YOLO11 tends to struggle with drawings, cartoons, heavy motion blur, "
-            "and very low-light images."
+            "Tip: YOLO11 can struggle with drawings, cartoons, heavy motion blur, and very low-light images."
         )
 else:
     st.markdown(
         f"""
-        <div class="card" style="text-align:center; padding: 40px 20px;">
-            {icon("upload_file", "2.5rem")}
-            <div style="margin-top: 12px; color: #9aa4c8;">
+        <div class="card" style="text-align:center; padding: 48px 24px;">
+            {icon("upload_file", "2.8rem")}
+            <div style="margin-top: 14px; color: #94a3b8; font-size: 1.05rem;">
                 Upload an image or use your camera to get started.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+# =============================================================================
+# Copyright
+# =============================================================================
+st.markdown(
+    '<div class="copyright">© 2026 Justine Umutoni</div>',
+    unsafe_allow_html=True,
+)
