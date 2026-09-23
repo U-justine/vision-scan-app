@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 import numpy as np
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageOps
 from ultralytics import YOLO
 
 # =============================================================================
@@ -302,31 +302,49 @@ def summarize(detections):
 
 
 # =============================================================================
-# Sidebar — Only Learning Tips + COCO Class Library
+# Sidebar — Controls + Did you know? + COCO class library
 # =============================================================================
 with st.sidebar:
+    st.markdown(
+        f'<div class="section-title">{icon("tune", "1.3rem")} Controls</div>',
+        unsafe_allow_html=True,
+    )
+
+    model_choice = st.selectbox(
+        "Model",
+        ["yolo11n.pt", "yolo11s.pt", "yolo11m.pt", "yolo11l.pt"],
+        index=2,
+        help="yolo11m is the recommended balance of speed and accuracy.",
+    )
+
+    device = st.selectbox(
+        "Device",
+        ["cpu", "cuda", "mps"],
+        index=0,
+        help="Use cuda or mps if you have a compatible GPU.",
+    )
+
+    conf_threshold = st.slider("Confidence", 0.10, 0.90, 0.40, 0.05)
+    iou_threshold = st.slider("IoU (NMS)", 0.10, 0.90, 0.45, 0.05)
+    max_det = st.slider("Max detections", 10, 300, 100, 10)
+
+    st.markdown("---")
+
     st.markdown(
         f'<div class="section-title">{icon("lightbulb", "1.3rem")} Did you know?</div>',
         unsafe_allow_html=True,
     )
 
     tips = [
-        ("YOLO means “You Only Look Once”", 
+        ("YOLO means “You Only Look Once”",
          "It detects every object in a single pass through the network — that’s why it’s so fast."),
-        
-        ("COCO has 80 everyday classes", 
+        ("COCO has 80 everyday classes",
          "From person, car and dog to toothbrush and hair drier. It is the most popular detection benchmark."),
-        
-        ("YOLO11 is the latest generation", 
+        ("YOLO11 is the latest generation",
          "Released by Ultralytics in 2024, it is more accurate and faster than YOLOv8."),
-        
-        ("Confidence is not probability", 
+        ("Confidence is not probability",
          "The percentage you see is the model’s internal confidence score, not a true calibrated probability."),
-        
-        ("Bigger models are smarter but slower", 
-         "yolo11n is tiny and very fast. yolo11x is huge and more accurate — choose based on your need."),
-        
-        ("NMS removes duplicate boxes", 
+        ("NMS removes duplicate boxes",
          "Non-Maximum Suppression keeps only the best box when several overlap on the same object."),
     ]
 
@@ -347,7 +365,6 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # Load model just to get class names (cached)
     try:
         _model = load_model("yolo11m.pt")
         COCO_CLASSES = list(_model.names.values())
@@ -357,15 +374,19 @@ with st.sidebar:
 
 
 # =============================================================================
-# Default settings (can be changed in Advanced settings)
+# Load model
 # =============================================================================
-DEFAULTS = {
-    "weights": "yolo11m.pt",
-    "device": "cpu",
-    "conf": 0.40,
-    "iou": 0.45,
-    "max_det": 100,
-}
+with st.spinner("Loading model..."):
+    try:
+        model = load_model(model_choice)
+        model_loaded = True
+    except Exception as e:
+        model_loaded = False
+        st.error(f"Couldn't load model: {e}")
+
+if not model_loaded:
+    st.stop()
+
 
 # =============================================================================
 # Hero
@@ -382,34 +403,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-# Advanced settings (moved out of sidebar)
-with st.expander("⚙️ Advanced settings", expanded=False):
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        model_choice = st.selectbox(
-            "Model",
-            ["yolo11n.pt", "yolo11s.pt", "yolo11m.pt", "yolo11l.pt"],
-            index=2,
-        )
-        device = st.selectbox("Device", ["cpu", "cuda", "mps"], index=0)
-    with col2:
-        conf_threshold = st.slider("Confidence", 0.10, 0.90, 0.40, 0.05)
-        iou_threshold = st.slider("IoU (NMS)", 0.10, 0.90, 0.45, 0.05)
-    with col3:
-        max_det = st.slider("Max detections", 10, 300, 100, 10)
-
-# Load the selected model
-with st.spinner("Loading model..."):
-    try:
-        model = load_model(model_choice)
-        model_loaded = True
-    except Exception as e:
-        model_loaded = False
-        st.error(f"Couldn't load model: {e}")
-
-if not model_loaded:
-    st.stop()
 
 # =============================================================================
 # Image input
@@ -436,14 +429,18 @@ if input_mode == "Upload image":
     )
     if uploaded_file is not None:
         try:
-            image = Image.open(uploaded_file).convert("RGB")
+            image = Image.open(uploaded_file)
+            image = ImageOps.exif_transpose(image)   # Fix rotation
+            image = image.convert("RGB")
         except Exception as e:
             st.error(f"Could not read the uploaded file: {e}")
 else:
     camera_file = st.camera_input("Take a picture", label_visibility="collapsed")
     if camera_file is not None:
         try:
-            image = Image.open(camera_file).convert("RGB")
+            image = Image.open(camera_file)
+            image = ImageOps.exif_transpose(image)   # Fix rotation
+            image = image.convert("RGB")
         except Exception as e:
             st.error(f"Could not read the captured image: {e}")
 
@@ -565,7 +562,7 @@ if image is not None:
             mime="image/png",
         )
     else:
-        st.warning("No objects detected. Try lowering the confidence threshold in Advanced settings.")
+        st.warning("No objects detected. Try lowering the confidence threshold in the sidebar.")
         st.caption(
             "Tip: YOLO11 can struggle with drawings, cartoons, heavy motion blur, and very low-light images."
         )
