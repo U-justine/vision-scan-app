@@ -1,45 +1,42 @@
-# 🔍 VisionScan — YOLO Object Detection
+# 🔍 Nexus Vision — YOLO11 Object Detection
 
-A real-time object detection web app built with **YOLOv8** (pretrained on **COCO**) and **Streamlit**. Upload or capture an image and the model draws bounding boxes around detected objects.
+A polished, deep-slate-and-teal object detection web app built with **YOLO11** and **Streamlit** — a glassmorphism hero header, animated stat cards, an educational "Did you know?" sidebar, and a clean detection breakdown with icons throughout.
 
 ## Features
 
-- **80 COCO classes** detected out of the box — no training needed
-- **Upload or capture**: choose from file upload or live camera
-- **Adjustable confidence & IoU thresholds**: sliders to fine-tune detection sensitivity
-- **Confidence explanation**: sidebar note clarifies what the scores mean
-- **Detection summary**: counts and average confidence per class
-- **Downloadable results**: save the annotated image as a PNG
-- **View all COCO classes**: expandable list in the sidebar
-- **Deployable to Streamlit Cloud**
-
-## COCO Dataset
-
-**COCO** (Common Objects in Context) is a standard benchmark dataset with **80 object classes**, including people, vehicles, animals, furniture, and everyday household items.
+- **YOLO11** (Ultralytics' latest generation, faster and more accurate than YOLOv8)
+- **Advanced settings panel** — model size, device, confidence, IoU, and max detections, tucked into a collapsible expander so the main flow stays uncluttered
+- **Model choice**: nano / small / medium (default) / large, traded off between speed and accuracy
+- **Device choice**: CPU, CUDA, or MPS, for whichever hardware you're running on
+- **Upload or camera capture**, with automatic downscaling of oversized images
+- **"Did you know?" sidebar** — short facts about YOLO, COCO, and confidence scores, plus the full 80-class COCO library
+- **Live stats**: object count, unique classes, average confidence, inference time
+- **Detection breakdown** with per-class count and min/avg/max confidence
+- **Bounding box coordinates** in a collapsible expander for debugging
+- **Downloadable annotated image**
+- **Defensive error handling** for bad uploads, failed inference, and unknown class IDs
 
 ## Tech Stack
 
-- **YOLOv8** (Ultralytics) — object detection
+- **YOLO11** (Ultralytics) — object detection
 - **Streamlit** — web app framework
 - **OpenCV / Pillow / NumPy** — image processing
 
 ## Project Structure
 
 ```
-vision-scan-app/
+nexus-vision/
 ├── app.py
 ├── requirements.txt
 └── README.md
 ```
 
-(`yolov8n.pt` downloads automatically the first time you run the app, or you can fetch it ahead of time — see below.)
-
 ## Run Locally
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/YOUR_USERNAME/vision-scan-app.git
-cd vision-scan-app
+git clone https://github.com/YOUR_USERNAME/nexus-vision.git
+cd nexus-vision
 
 # 2. Create a virtual environment
 python -m venv venv
@@ -49,14 +46,11 @@ venv\Scripts\activate         # Windows
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. (Optional) Pre-download the YOLOv8 model
-python -c "from ultralytics import YOLO; YOLO('yolov8n.pt')"
-
-# 5. Launch the app
+# 4. Launch the app
 streamlit run app.py
 ```
 
-Then open `http://localhost:8501` in your browser.
+Then open `http://localhost:8501`. The default model (`yolo11m.pt`) downloads automatically on first run; switching models in Advanced settings downloads the new weights the first time you select them.
 
 ## Deploy to Streamlit Cloud
 
@@ -65,18 +59,21 @@ Then open `http://localhost:8501` in your browser.
 3. Click **"New app"**, select your repo, and set the main file to `app.py`.
 4. Click **Deploy**.
 
-Your app will be live at `https://your-app-name.streamlit.app` within 1–2 minutes. Ultralytics will download `yolov8n.pt` automatically on first run, so you don't need to commit the weights file to the repo — just make sure the deployment has internet access on first boot.
+Ultralytics downloads model weights on first run, so no need to commit `.pt` files — just make sure the deployment has internet access on first boot. Streamlit Cloud's free tier is CPU-only, so leave **Device** set to `cpu`; `yolo11n` or `yolo11s` will feel noticeably snappier there than `yolo11m` or `yolo11l`.
+
+## Tuning for fewer wrong predictions
+
+The confidence and IoU sliders in **Advanced settings** are your main levers:
+
+- **Raise the confidence threshold** (above the 0.40 default) to hide anything the model isn't fairly sure about — the single biggest lever against wrong detections
+- **Lower the IoU threshold** to remove more duplicate/overlapping boxes on the same object
+- **Use a larger model** (`yolo11m` or `yolo11l`) for better base accuracy, at the cost of speed
+
+No object detector is 100% accurate, and pushing precision up will sometimes cost you a borderline true detection in return. If a specific class keeps misfiring, raising the confidence threshold or switching to a larger model are the most reliable fixes.
 
 ## About Confidence Scores
 
-The percentage shown next to each detection is a **confidence score**, not a calibrated probability. It reflects the model's certainty about a detection (objectness × class probability). A score of 0.94 means the model is much more confident than one scored 0.70 — not that it is literally 94% likely to be correct.
-
-## Ideas for Extending This Project
-
-- Swap `yolov8n.pt` for a larger variant (`yolov8s.pt`, `yolov8m.pt`) for higher accuracy at the cost of speed
-- Fine-tune on a custom dataset for a domain-specific use case (e.g. medical imaging, agriculture)
-- Add video/webcam streaming support instead of single-frame capture
-- Log detections to a database for analytics over time
+The percentage shown next to each detection is a **confidence score**, not a calibrated probability. It reflects the model's certainty about a detection (objectness × class probability) — a score of 0.94 means the model is much more confident than one scored 0.70, not that it's literally right 94% of the time.
 
 ## License
 
@@ -84,6 +81,9 @@ Apache 2.0 — free to use for learning and portfolio projects.
 
 ## Credits
 
-- Model: [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics)
+- Model: [Ultralytics YOLO11](https://github.com/ultralytics/ultralytics)
 - Dataset: [COCO](https://cocodataset.org) (80 classes)
 - Framework: [Streamlit](https://streamlit.io)
+- Icons: [Material Symbols](https://fonts.google.com/icons)
+
+© 2026 Justine Umutoni
