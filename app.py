@@ -4,14 +4,16 @@ Nexus Vision — YOLOv8 Object Detection Web App
 Real-time object detection with YOLOv8 (pretrained on COCO, 80 classes).
 """
 
+import time
 import warnings
+from io import BytesIO
+
 warnings.filterwarnings("ignore")
 
 import numpy as np
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 from ultralytics import YOLO
-
 
 # =============================================================================
 # Page configuration
@@ -21,8 +23,15 @@ st.set_page_config(
     page_icon=":material/visibility:",
     layout="wide",
     initial_sidebar_state="expanded",
+    menu_items={
+        "Get Help": "https://github.com/ultralytics/ultralytics",
+        "Report a bug": "https://github.com/ultralytics/ultralytics/issues",
+        "About": "Nexus Vision — YOLOv8 object detection built with Streamlit.",
+    },
 )
 
+# A sane ceiling so a huge phone photo doesn't crawl through the pipeline.
+MAX_IMAGE_SIDE = 1920
 
 # =============================================================================
 # Custom CSS — modern dark theme, icons, hover effects
@@ -33,16 +42,12 @@ st.markdown(
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
 
     <style>
-        /* ---------- Global ---------- */
-        html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
-        }
+        html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
         .stApp {
             background: radial-gradient(circle at 20% 0%, #1a1f3a 0%, #0d1020 45%, #05060d 100%);
             color: #e6e8f0;
         }
 
-        /* ---------- Icons ---------- */
         .material-symbols-rounded {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
@@ -50,7 +55,6 @@ st.markdown(
             color: #7c8cff;
         }
 
-        /* ---------- Hero header ---------- */
         .hero {
             display: flex;
             align-items: center;
@@ -77,10 +81,7 @@ st.markdown(
             background: linear-gradient(135deg, #7c8cff, #a05aff);
             box-shadow: 0 0 20px rgba(124,140,255,0.4);
         }
-        .hero-icon .material-symbols-rounded {
-            font-size: 2rem;
-            color: #ffffff;
-        }
+        .hero-icon .material-symbols-rounded { font-size: 2rem; color: #ffffff; }
         .hero-title {
             font-size: 2rem;
             font-weight: 800;
@@ -89,13 +90,8 @@ st.markdown(
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .hero-sub {
-            font-size: 0.95rem;
-            color: #9aa4c8;
-            margin-top: 4px;
-        }
+        .hero-sub { font-size: 0.95rem; color: #9aa4c8; margin-top: 4px; }
 
-        /* ---------- Card ---------- */
         .card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(124,140,255,0.18);
@@ -111,7 +107,6 @@ st.markdown(
             box-shadow: 0 8px 24px rgba(0,0,0,0.35);
         }
 
-        /* ---------- Stat cards ---------- */
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -142,16 +137,8 @@ st.markdown(
             align-items: center;
             justify-content: center;
         }
-        .stat-icon .material-symbols-rounded {
-            font-size: 1.5rem;
-            color: #b8c0ff;
-        }
-        .stat-value {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #ffffff;
-            line-height: 1;
-        }
+        .stat-icon .material-symbols-rounded { font-size: 1.5rem; color: #b8c0ff; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: #ffffff; line-height: 1; }
         .stat-label {
             font-size: 0.8rem;
             color: #9aa4c8;
@@ -160,7 +147,6 @@ st.markdown(
             margin-top: 4px;
         }
 
-        /* ---------- Detection list ---------- */
         .det-item {
             display: flex;
             align-items: center;
@@ -177,12 +163,7 @@ st.markdown(
             border-left-color: #a05aff;
             transform: translateX(4px);
         }
-        .det-name {
-            font-weight: 600;
-            color: #e6e8f0;
-            flex: 1;
-            text-transform: capitalize;
-        }
+        .det-name { font-weight: 600; color: #e6e8f0; flex: 1; text-transform: capitalize; }
         .det-count {
             font-size: 0.85rem;
             color: #9aa4c8;
@@ -190,13 +171,9 @@ st.markdown(
             border-radius: 8px;
             background: rgba(124,140,255,0.12);
         }
-        .det-conf {
-            font-weight: 700;
-            color: #7cffb2;
-            font-variant-numeric: tabular-nums;
-        }
+        .det-conf { font-weight: 700; color: #7cffb2; font-variant-numeric: tabular-nums; }
+        .det-range { font-size: 0.78rem; color: #9aa4c8; margin-left: 6px; }
 
-        /* ---------- Section titles ---------- */
         .section-title {
             display: flex;
             align-items: center;
@@ -207,7 +184,6 @@ st.markdown(
             margin: 24px 0 12px;
         }
 
-        /* ---------- Buttons ---------- */
         .stButton > button {
             background: linear-gradient(135deg, #7c8cff, #a05aff);
             color: white;
@@ -217,12 +193,8 @@ st.markdown(
             font-weight: 600;
             transition: all 0.25s ease;
         }
-        .stButton > button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(124,140,255,0.4);
-        }
+        .stButton > button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124,140,255,0.4); }
 
-        /* ---------- Streamlit widget tweaks ---------- */
         section[data-testid="stSidebar"] {
             background: linear-gradient(180deg, #0d1020 0%, #141834 100%);
             border-right: 1px solid rgba(124,140,255,0.15);
@@ -230,15 +202,9 @@ st.markdown(
         .stRadio > div { gap: 12px; }
         .stRadio label { transition: all 0.2s ease; }
         .stRadio label:hover { color: #b8c0ff; }
-        .stFileUploader, .stCameraInput {
-            border-radius: 14px;
-            transition: all 0.25s ease;
-        }
-        .stFileUploader:hover, .stCameraInput:hover {
-            box-shadow: 0 0 24px rgba(124,140,255,0.15);
-        }
+        .stFileUploader, .stCameraInput { border-radius: 14px; transition: all 0.25s ease; }
+        .stFileUploader:hover, .stCameraInput:hover { box-shadow: 0 0 24px rgba(124,140,255,0.15); }
 
-        /* Hide Streamlit chrome */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
     </style>
@@ -248,22 +214,37 @@ st.markdown(
 
 
 # =============================================================================
-# Model loading
-# =============================================================================
-@st.cache_resource(show_spinner=False)
-def load_model() -> YOLO:
-    return YOLO("yolov8n.pt")
-
-
-model = load_model()
-COCO_CLASSES = list(model.names.values())
-
-
-# =============================================================================
 # Helper functions
 # =============================================================================
-def run_detection(image: Image.Image, conf: float):
-    results = model(np.array(image), conf=conf, max_det=50)
+def icon(name: str, size: str = "1.15rem") -> str:
+    """Return an HTML span for a Material Symbols icon, styled consistently."""
+    return (
+        f'<span class="material-symbols-rounded" '
+        f'style="font-size:{size}; font-variation-settings: '
+        f"'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;\">{name}</span>"
+    )
+
+
+@st.cache_resource(show_spinner=False)
+def load_model(weights: str) -> YOLO:
+    return YOLO(weights)
+
+
+def resize_if_needed(image: Image.Image, max_side: int = MAX_IMAGE_SIDE) -> Image.Image:
+    """Downscale oversized uploads so inference stays fast and memory-safe."""
+    w, h = image.size
+    if max(w, h) <= max_side:
+        return image
+    image = image.copy()
+    image.thumbnail((max_side, max_side))
+    return image
+
+
+def run_detection(model: YOLO, image: Image.Image, conf: float, iou: float, max_det: int):
+    start = time.time()
+    results = model(np.array(image), conf=conf, iou=iou, max_det=max_det)
+    elapsed = time.time() - start
+
     result = results[0]
     annotated_bgr = result.plot()
     annotated_rgb = annotated_bgr[:, :, ::-1]
@@ -272,14 +253,15 @@ def run_detection(image: Image.Image, conf: float):
     if result.boxes is not None:
         for box in result.boxes:
             cls_id = int(box.cls[0])
+            name = model.names.get(cls_id, f"class_{cls_id}")
             detections.append(
                 (
-                    model.names[cls_id],
+                    name,
                     float(box.conf[0]),
                     box.xyxy[0].cpu().numpy().astype(int).tolist(),
                 )
             )
-    return annotated_rgb, detections
+    return annotated_rgb, detections, elapsed
 
 
 def summarize(detections):
@@ -287,39 +269,84 @@ def summarize(detections):
     for name, score, _ in detections:
         summary.setdefault(name, []).append(score)
     return {
-        n: {"count": len(s), "avg_conf": sum(s) / len(s)}
+        n: {
+            "count": len(s),
+            "avg_conf": sum(s) / len(s),
+            "max_conf": max(s),
+            "min_conf": min(s),
+        }
         for n, s in summary.items()
     }
-
-
-def icon(name: str, size: str = "1.15rem") -> str:
-    """Return an HTML span for a Material Symbols icon."""
-    return (
-        f'<span class="material-symbols-rounded" '
-        f'style="font-size:{size}">{name}</span>'
-    )
 
 
 # =============================================================================
 # Sidebar
 # =============================================================================
+MODEL_OPTIONS = {
+    "Nano — fastest, least accurate (yolov8n.pt)": "yolov8n.pt",
+    "Small — balanced (yolov8s.pt)": "yolov8s.pt",
+    "Medium — most accurate, slower (yolov8m.pt)": "yolov8m.pt",
+}
+
 with st.sidebar:
     st.markdown(
         f'<div class="section-title">{icon("tune", "1.3rem")} Settings</div>',
         unsafe_allow_html=True,
     )
 
+    model_label = st.selectbox(
+        "Model size",
+        list(MODEL_OPTIONS.keys()),
+        index=0,
+        help="Larger models are more accurate but slower to run, especially on CPU.",
+    )
+    weights_file = MODEL_OPTIONS[model_label]
+
     conf_threshold = st.slider(
         "Confidence threshold",
         min_value=0.10,
         max_value=0.90,
-        value=0.40,
+        value=0.60,
         step=0.05,
         help="Only detections above this score are shown.",
     )
 
+    iou_threshold = st.slider(
+        "IoU threshold (NMS)",
+        min_value=0.10,
+        max_value=0.90,
+        value=0.45,
+        step=0.05,
+        help="Controls how aggressively overlapping boxes for the same object are merged.",
+    )
+
+    max_det = st.slider(
+        "Max detections",
+        min_value=10,
+        max_value=300,
+        value=100,
+        step=10,
+        help="Upper limit on how many objects can be reported for one image.",
+    )
+
+    with st.spinner("Loading model..."):
+        try:
+            model = load_model(weights_file)
+            model_loaded = True
+        except Exception as e:
+            model_loaded = False
+            st.error(f"Couldn't load `{weights_file}`: {e}")
+
+    COCO_CLASSES = list(model.names.values()) if model_loaded else []
+
+    exclude_classes = st.multiselect(
+        "Exclude classes",
+        COCO_CLASSES,
+        help="Detections of these classes will be filtered out of the results.",
+    )
+
     with st.expander("COCO class library"):
-        st.caption(", ".join(COCO_CLASSES))
+        st.caption(", ".join(COCO_CLASSES) if COCO_CLASSES else "Model not loaded.")
 
     st.markdown("---")
     st.markdown(
@@ -335,6 +362,8 @@ with st.sidebar:
     st.markdown("---")
     st.caption("YOLOv8 · Streamlit · COCO (80 classes)")
 
+if not model_loaded:
+    st.stop()
 
 # =============================================================================
 # Hero header
@@ -377,7 +406,6 @@ if input_mode == "Upload image":
             image = Image.open(uploaded_file).convert("RGB")
         except Exception as e:
             st.error(f"Could not read the uploaded file: {e}")
-
 else:
     camera_file = st.camera_input("Take a picture", label_visibility="collapsed")
     if camera_file is not None:
@@ -386,6 +414,14 @@ else:
         except Exception as e:
             st.error(f"Could not read the captured image: {e}")
 
+if image is not None:
+    original_size = image.size
+    image = resize_if_needed(image)
+    if image.size != original_size:
+        st.caption(
+            f"Image resized from {original_size[0]}×{original_size[1]} to "
+            f"{image.size[0]}×{image.size[1]} for faster processing."
+        )
 
 # =============================================================================
 # Detection & results
@@ -402,10 +438,15 @@ if image is not None:
 
     with st.spinner("Running YOLOv8 inference..."):
         try:
-            annotated_rgb, detections = run_detection(image, conf_threshold)
+            annotated_rgb, detections, inference_time = run_detection(
+                model, image, conf_threshold, iou_threshold, max_det
+            )
         except Exception as e:
             st.error(f"Detection failed: {e}")
             st.stop()
+
+    if exclude_classes:
+        detections = [d for d in detections if d[0] not in exclude_classes]
 
     with col_detected:
         st.markdown(
@@ -413,8 +454,8 @@ if image is not None:
             unsafe_allow_html=True,
         )
         st.image(annotated_rgb, use_container_width=True)
+        st.caption(f"⏱ Inference time: {inference_time:.2f}s")
 
-    # ---------- Stat cards ----------
     if detections:
         summary = summarize(detections)
         total = len(detections)
@@ -445,12 +486,18 @@ if image is not None:
                         <div class="stat-label">Avg confidence</div>
                     </div>
                 </div>
+                <div class="stat">
+                    <div class="stat-icon">{icon("timer", "1.5rem")}</div>
+                    <div>
+                        <div class="stat-value">{inference_time:.2f}s</div>
+                        <div class="stat-label">Inference time</div>
+                    </div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        # ---------- Detection list ----------
         st.markdown(
             f'<div class="section-title">{icon("list_alt", "1.2rem")} Detection breakdown</div>',
             unsafe_allow_html=True,
@@ -460,27 +507,41 @@ if image is not None:
         rows_html = "".join(
             f"""
             <div class="det-item">
-                <span class="material-symbols-rounded">label</span>
+                {icon("label")}
                 <span class="det-name">{name}</span>
                 <span class="det-count">× {info['count']}</span>
                 <span class="det-conf">{info['avg_conf']:.1%}</span>
+                <span class="det-range">(min {info['min_conf']:.0%} · max {info['max_conf']:.0%})</span>
             </div>
             """
             for name, info in sorted_summary
         )
         st.markdown(rows_html, unsafe_allow_html=True)
 
-        # ---------- Raw coordinates ----------
         with st.expander("Bounding box coordinates"):
             for name, score, (x1, y1, x2, y2) in detections:
                 st.markdown(
-                    f'<span class="material-symbols-rounded">crop_free</span> '
-                    f'**{name}** ({score:.1%}) — `[{x1}, {y1}, {x2}, {y2}]`',
+                    f'{icon("crop_free", "1rem")} **{name}** ({score:.1%}) — `[{x1}, {y1}, {x2}, {y2}]`',
                     unsafe_allow_html=True,
                 )
-    else:
-        st.warning("No objects detected. Try lowering the confidence threshold in the sidebar.")
 
+        annotated_pil = Image.fromarray(annotated_rgb)
+        buf = BytesIO()
+        annotated_pil.save(buf, format="PNG")
+        st.download_button(
+            "⬇️ Download annotated image",
+            data=buf.getvalue(),
+            file_name="nexus_vision_result.png",
+            mime="image/png",
+        )
+    else:
+        st.warning(
+            "No objects detected. Try lowering the confidence threshold in the sidebar."
+        )
+        st.caption(
+            "Tip: YOLOv8 tends to struggle with drawings, cartoons, heavy motion blur, "
+            "and very low-light images."
+        )
 else:
     st.markdown(
         f"""
