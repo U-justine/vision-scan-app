@@ -54,7 +54,6 @@ st.markdown(
             color: #2dd4bf;
         }
 
-        /* Hero */
         .hero {
             display: flex;
             align-items: center;
@@ -92,7 +91,6 @@ st.markdown(
         }
         .hero-sub { font-size: 1rem; color: #94a3b8; margin-top: 6px; letter-spacing: 0.02em; }
 
-        /* Cards & stats */
         .card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(45,212,191,0.15);
@@ -147,7 +145,6 @@ st.markdown(
             margin-top: 4px;
         }
 
-        /* Detection items */
         .det-item {
             display: flex;
             align-items: center;
@@ -185,7 +182,18 @@ st.markdown(
             margin: 26px 0 14px;
         }
 
-        /* Buttons */
+        .tip-card {
+            background: rgba(45,212,191,0.06);
+            border: 1px solid rgba(45,212,191,0.18);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: #cbd5e1;
+        }
+        .tip-card strong { color: #5eead4; }
+
         .stButton > button {
             background: linear-gradient(135deg, #2dd4bf, #0ea5e9);
             color: #0f172a;
@@ -200,18 +208,11 @@ st.markdown(
             box-shadow: 0 10px 28px rgba(45,212,191,0.35);
         }
 
-        /* Sidebar */
         section[data-testid="stSidebar"] {
             background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
             border-right: 1px solid rgba(45,212,191,0.12);
         }
-        .stRadio > div { gap: 12px; }
-        .stRadio label { transition: all 0.2s ease; }
-        .stRadio label:hover { color: #5eead4; }
-        .stFileUploader, .stCameraInput { border-radius: 16px; transition: all 0.25s ease; }
-        .stFileUploader:hover, .stCameraInput:hover { box-shadow: 0 0 28px rgba(45,212,191,0.12); }
 
-        /* Copyright */
         .copyright {
             text-align: center;
             color: #475569;
@@ -254,7 +255,7 @@ def resize_if_needed(image: Image.Image, max_side: int = MAX_IMAGE_SIDE) -> Imag
     return image
 
 
-def run_detection(model: YOLO, image: Image.Image, conf: float, iou: float, max_det: int, device: str, exclude: list):
+def run_detection(model: YOLO, image: Image.Image, conf: float, iou: float, max_det: int, device: str):
     start = time.time()
     results = model(
         np.array(image),
@@ -266,19 +267,6 @@ def run_detection(model: YOLO, image: Image.Image, conf: float, iou: float, max_
     )
     elapsed = time.time() - start
     result = results[0]
-
-    # Filter excluded classes BEFORE plotting so they never appear on the image
-    if exclude and result.boxes is not None:
-        keep = []
-        for i, box in enumerate(result.boxes):
-            cls_id = int(box.cls[0])
-            name = model.names.get(cls_id, f"class_{cls_id}")
-            if name not in exclude:
-                keep.append(i)
-        if keep:
-            result.boxes = result.boxes[keep]
-        else:
-            result.boxes = None
 
     annotated_bgr = result.plot()
     annotated_rgb = annotated_bgr[:, :, ::-1]
@@ -314,71 +302,70 @@ def summarize(detections):
 
 
 # =============================================================================
-# Sidebar — COCO class library focused + essential controls
+# Sidebar — Only Learning Tips + COCO Class Library
 # =============================================================================
-MODEL_OPTIONS = {
-    "Nano — fastest (yolo11n.pt)": "yolo11n.pt",
-    "Small — balanced (yolo11s.pt)": "yolo11s.pt",
-    "Medium — recommended (yolo11m.pt)": "yolo11m.pt",
-    "Large — highest accuracy (yolo11l.pt)": "yolo11l.pt",
-}
-
 with st.sidebar:
     st.markdown(
-        f'<div class="section-title">{icon("tune", "1.3rem")} Controls</div>',
+        f'<div class="section-title">{icon("lightbulb", "1.3rem")} Did you know?</div>',
         unsafe_allow_html=True,
     )
 
-    model_label = st.selectbox(
-        "Model",
-        list(MODEL_OPTIONS.keys()),
-        index=2,
-        help="YOLO11m offers the best accuracy / speed balance.",
-    )
-    weights_file = MODEL_OPTIONS[model_label]
+    tips = [
+        ("YOLO means “You Only Look Once”", 
+         "It detects every object in a single pass through the network — that’s why it’s so fast."),
+        
+        ("COCO has 80 everyday classes", 
+         "From person, car and dog to toothbrush and hair drier. It is the most popular detection benchmark."),
+        
+        ("YOLO11 is the latest generation", 
+         "Released by Ultralytics in 2024, it is more accurate and faster than YOLOv8."),
+        
+        ("Confidence is not probability", 
+         "The percentage you see is the model’s internal confidence score, not a true calibrated probability."),
+        
+        ("Bigger models are smarter but slower", 
+         "yolo11n is tiny and very fast. yolo11x is huge and more accurate — choose based on your need."),
+        
+        ("NMS removes duplicate boxes", 
+         "Non-Maximum Suppression keeps only the best box when several overlap on the same object."),
+    ]
 
-    device = st.selectbox(
-        "Device",
-        ["cpu", "cuda", "mps"],
-        index=0,
-        help="Use cuda or mps if you have a compatible GPU.",
-    )
-
-    conf_threshold = st.slider("Confidence", 0.10, 0.90, 0.40, 0.05)
-    iou_threshold = st.slider("IoU (NMS)", 0.10, 0.90, 0.45, 0.05)
-    max_det = st.slider("Max detections", 10, 300, 100, 10)
-
-    with st.spinner("Loading model..."):
-        try:
-            model = load_model(weights_file)
-            model_loaded = True
-        except Exception as e:
-            model_loaded = False
-            st.error(f"Couldn't load `{weights_file}`: {e}")
-
-    if model_loaded:
-        COCO_CLASSES = list(model.names.values())
-    else:
-        COCO_CLASSES = []
-
-    exclude_classes = st.multiselect(
-        "Exclude classes",
-        COCO_CLASSES,
-        help="These classes will be removed from both the image and the results.",
-    )
+    for title, text in tips:
+        st.markdown(
+            f"""
+            <div class="tip-card">
+                <strong>{title}</strong><br>
+                {text}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     st.markdown("---")
     st.markdown(
         f'<div class="section-title">{icon("library_books", "1.3rem")} COCO class library</div>',
         unsafe_allow_html=True,
     )
-    if COCO_CLASSES:
-        st.caption(", ".join(COCO_CLASSES))
-    else:
-        st.caption("Model not loaded.")
 
-if not model_loaded:
-    st.stop()
+    # Load model just to get class names (cached)
+    try:
+        _model = load_model("yolo11m.pt")
+        COCO_CLASSES = list(_model.names.values())
+        st.caption(", ".join(COCO_CLASSES))
+    except Exception:
+        st.caption("Model not loaded yet.")
+
+
+# =============================================================================
+# Default settings (can be changed in Advanced settings)
+# =============================================================================
+DEFAULTS = {
+    "weights": "yolo11m.pt",
+    "device": "cpu",
+    "conf": 0.40,
+    "iou": 0.45,
+    "max_det": 100,
+}
 
 # =============================================================================
 # Hero
@@ -396,6 +383,37 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Advanced settings (moved out of sidebar)
+with st.expander("⚙️ Advanced settings", expanded=False):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        model_choice = st.selectbox(
+            "Model",
+            ["yolo11n.pt", "yolo11s.pt", "yolo11m.pt", "yolo11l.pt"],
+            index=2,
+        )
+        device = st.selectbox("Device", ["cpu", "cuda", "mps"], index=0)
+    with col2:
+        conf_threshold = st.slider("Confidence", 0.10, 0.90, 0.40, 0.05)
+        iou_threshold = st.slider("IoU (NMS)", 0.10, 0.90, 0.45, 0.05)
+    with col3:
+        max_det = st.slider("Max detections", 10, 300, 100, 10)
+
+# Load the selected model
+with st.spinner("Loading model..."):
+    try:
+        model = load_model(model_choice)
+        model_loaded = True
+    except Exception as e:
+        model_loaded = False
+        st.error(f"Couldn't load model: {e}")
+
+if not model_loaded:
+    st.stop()
+
+# =============================================================================
+# Image input
+# =============================================================================
 st.markdown(
     f'<div class="section-title">{icon("add_photo_alternate", "1.3rem")} Provide an image</div>',
     unsafe_allow_html=True,
@@ -454,7 +472,7 @@ if image is not None:
     with st.spinner("Running YOLO11 inference..."):
         try:
             annotated_rgb, detections, inference_time = run_detection(
-                model, image, conf_threshold, iou_threshold, max_det, device, exclude_classes
+                model, image, conf_threshold, iou_threshold, max_det, device
             )
         except Exception as e:
             st.error(f"Detection failed: {e}")
@@ -466,7 +484,7 @@ if image is not None:
             unsafe_allow_html=True,
         )
         st.image(annotated_rgb, use_container_width=True)
-        st.caption(f"⏱ Inference time: {inference_time:.2f}s · Device: {device}")
+        st.caption(f"⏱ {inference_time:.2f}s · {device.upper()} · {model_choice}")
 
     if detections:
         summary = summarize(detections)
@@ -547,7 +565,7 @@ if image is not None:
             mime="image/png",
         )
     else:
-        st.warning("No objects detected. Try lowering the confidence threshold.")
+        st.warning("No objects detected. Try lowering the confidence threshold in Advanced settings.")
         st.caption(
             "Tip: YOLO11 can struggle with drawings, cartoons, heavy motion blur, and very low-light images."
         )
