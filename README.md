@@ -2,6 +2,8 @@
 
 A polished, deep-slate-and-teal object detection web app built with **YOLO11** and **Streamlit** — a glassmorphism hero header, animated stat cards, an educational "Did you know?" sidebar, and a clean detection breakdown with icons throughout.
 
+demo link: https://vision-scan-app-7fm7faqcmj6sotnj36otwk.streamlit.app/
+
 ## Features
 
 - **YOLO11** (Ultralytics' latest generation, faster and more accurate than YOLOv8)
